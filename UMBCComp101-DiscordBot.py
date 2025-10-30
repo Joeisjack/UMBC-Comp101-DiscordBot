@@ -86,6 +86,42 @@ async def wipe(ctx):
     else:
         print("UNAUTHORIZED")
 
+
+# Wipe All Group Channels
+# Usage: !wipegroups
+# Wipes all channels that start with "group-"
+@bot.command(name="wipegroups")
+async def wipegroups(ctx):
+    if ctx.author.id == BOT_OPERATOR:
+        guild = ctx.guild
+        channels_to_wipe = []
+
+        # Collect all channels that start with "group-"
+        for channel in guild.channels:
+            if channel.name.startswith("group-"):
+                channels_to_wipe.append(channel)
+        
+        if not channels_to_wipe:
+            await ctx.send("No group channels found to wipe.")
+            return
+        
+        await ctx.send(f"Starting to wipe {len(channels_to_wipe)} group channels...")
+
+        for channel in channels_to_wipe:
+            try:
+                cloned_channel = await channel.clone(reason = "Group Wipe Command")
+
+                OrigChannelPos = channel.position
+                await channel.delete()
+
+                await asyncio.sleep(1)
+                await cloned_channel.edit(position = OrigChannelPos)
+                await bot.get_channel(int(COMMAND_CENTER)).send("Cleared messages in " + channel.name)
+            except Exception as e:
+                await bot.get_channel(int(COMMAND_CENTER)).send(f"Failed to wipe {channel.name}: {e}")
+
+        await ctx.send("Finished wiping group channels.")
+
 # Verify user
 # Usage: !verify <@user-mention> <Name with underscore as space> <section>
 # Gives roles and sets the name of pinged user, deletes pinged user's original message, send log to dev chat
