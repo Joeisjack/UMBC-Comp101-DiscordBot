@@ -22,6 +22,7 @@ COMMAND_CENTER = -1
 
 # Role Names
 STUDENT = "Student"
+ALUMNI = "Alumni"
 INCLUSIVE = "Inclusive"
 INNOVATE = "Innovation"
 COLLABORATE = "Collaboration"
@@ -170,6 +171,42 @@ async def verify(ctx, member: discord.Member, name, section: int):
         await bot.get_channel(int(COMMAND_CENTER)).send("user " + str(member.id) + " has been given roles Student and " + userSectionName + " with name " + userGivenName)
     else:
         print("UNAUTHORIZED")
+
+# Update Alumni
+# Usage: !updatealumni
+# Gets all members with the Student role and removes all their roles. Then gives all of them the alumni role. Takes a bit to finish.
+@bot.command(name = "updatealumni")
+async def updatealumni(ctx):
+    if ctx.author.id != BOT_OPERATOR:
+        print("UNAUTHORIZED")
+        return
+    
+    guild = ctx.guild
+    studentRole = discord.utils.get(guild.roles, name=STUDENT)
+    alumniRole = discord.utils.get(guild.roles, name=ALUMNI)
+
+    if not studentRole or not alumniRole:
+        await ctx.send("Required roles not found.")
+        return
+    
+    updatedCount = 0
+
+    for member in guild.members:
+        if studentRole in member.roles:
+            try:
+                rolesToRemove = [role for role in member.roles if role != guild.default_role]
+                await member.remove_roles(*rolesToRemove)
+
+                await member.add_roles(alumniRole)
+                print(f"Updated roles for {member.name}.")
+                updatedCount += 1
+
+            except discord.Forbidden:
+                print(f"Permission error updating roles for {member.name}.")
+            except discord.HTTPException as e:
+                print(f"Error updating roles for {member.name}: {e}")
+
+    await ctx.send(f"Updated {updatedCount} members from Student to Alumni.")
         
 
 # Ping bot
